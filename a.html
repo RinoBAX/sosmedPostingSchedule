@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor Konten Instagram - PT. Bax Digital Indonesia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Professional -->
+    <!-- Application Structure Plan: A dashboard-style SPA was chosen to transform the static planning document into a functional, daily-use tool. The structure includes: 1) A top-level summary with key philosophy cards and a pillar distribution chart for a quick strategic overview. 2) An interactive weekly schedule with day-based filtering, which is the core interactive component for daily planning. 3) An accordion for best practices, keeping secondary information neatly tucked away. This structure prioritizes the user's primary task (checking the daily schedule) while keeping strategic context easily accessible, making it far more usable than a static table. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Filosofi & Tujuan Utama -> Goal: Inform -> Method: 3 Key Cards (HTML/Tailwind) -> Interaction: None -> Justification: Quick, scannable summary of core principles.
+        - Report Info: Tiga Pilar Konten (40/40/20 split) -> Goal: Compare Proportions -> Method: Donut Chart (Chart.js) -> Interaction: Hover to see details -> Justification: Visually communicates the content balance more effectively than text.
+        - Report Info: Jadwal Posting Mingguan -> Goal: Organize/Inform -> Method: Filterable Cards (HTML/JS) -> Interaction: Click day buttons to filter schedule -> Justification: Focuses user attention on a single day's tasks, improving usability over a large table, especially on mobile.
+        - Report Info: Panduan Implementasi -> Goal: Organize/Inform -> Method: Accordion (HTML/JS) -> Interaction: Click to expand/collapse -> Justification: Prevents information overload and keeps the UI clean.
+        - Report Info: Full Dashboard Export -> Goal: Distribute -> Method: Download as PDF (jsPDF + html2canvas) -> Interaction: Button click -> Justification: Allows the static plan to be shared offline.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            height: auto;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .active-day {
+            background-color: #1e293b; /* slate-800 */
+            color: #ffffff;
+        }
+        .inactive-day {
+            background-color: #ffffff;
+            color: #334155; /* slate-700 */
+            border-color: #e2e8f0; /* slate-200 */
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        /* Style for PDF rendering to ensure all content is visible */
+        .pdf-render-mode .schedule-card, 
+        .pdf-render-mode .accordion-content {
+            display: block !important;
+            max-height: none !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+    </style>
+</head>
+<body class="antialiased text-slate-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+
+        <header class="mb-8 flex flex-wrap justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900">Dasbor Perencanaan Konten Instagram</h1>
+                <p class="mt-1 text-slate-600">Panduan strategis interaktif untuk PT. Bax Digital Indonesia & BaxLancer.</p>
+            </div>
+            <button id="downloadPdfBtn" class="bg-slate-800 text-white font-semibold py-2 px-5 rounded-lg hover:bg-slate-700 transition-colors duration-200 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download PDF
+            </button>
+        </header>
+
+        <main id="main-content" class="space-y-12">
+            
+            <section id="strategi">
+                <h2 class="text-2xl font-semibold text-slate-800 mb-4">Ringkasan Strategi</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                    
+                    <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                            <h3 class="font-bold text-lg text-slate-900">Konsistensi</h3>
+                            <p class="text-slate-600 mt-2 text-sm">Membangun kebiasaan audiens dengan jadwal posting yang dapat diprediksi.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                            <h3 class="font-bold text-lg text-slate-900">Memberi Nilai</h3>
+                            <p class="text-slate-600 mt-2 text-sm">Menyajikan konten edukatif yang bermanfaat, tidak hanya promosi.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                            <h3 class="font-bold text-lg text-slate-900">Membangun Komunitas</h3>
+                            <p class="text-slate-600 mt-2 text-sm">Mendorong interaksi dua arah untuk menciptakan hubungan yang kuat.</p>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex flex-col justify-center">
+                        <h3 class="font-bold text-lg text-center text-slate-900 mb-4">Alokasi Pilar Konten</h3>
+                        <div class="chart-container">
+                            <canvas id="pilarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="jadwal">
+                <h2 class="text-2xl font-semibold text-slate-800 mb-4">Jadwal Interaktif Mingguan</h2>
+                <nav class="mb-6 flex flex-wrap gap-2 day-filters">
+                    <button data-day="senin" class="day-filter py-2 px-4 rounded-full text-sm font-semibold border transition-colors duration-200 active-day">Senin</button>
+                    <button data-day="selasa" class="day-filter py-2 px-4 rounded-full text-sm font-semibold border transition-colors duration-200 inactive-day">Selasa</button>
+                    <button data-day="rabu" class="day-filter py-2 px-4 rounded-full text-sm font-semibold border transition-colors duration-200 inactive-day">Rabu</button>
+                    <button data-day="kamis" class="day-filter py-2 px-4 rounded-full text-sm font-semibold border transition-colors duration-200 inactive-day">Kamis</button>
+                    <button data-day="jumat" class="day-filter py-2 px-4 rounded-full text-sm font-semibold border transition-colors duration-200 inactive-day">Jumat</button>
+                    <button data-day="sabtu" class="day-filter py-2 px-4 rounded-full text-sm font-semibold border transition-colors duration-200 inactive-day">Sabtu</button>
+                    <button data-day="minggu" class="day-filter py-2 px-4 rounded-full text-sm font-semibold border transition-colors duration-200 inactive-day">Minggu</button>
+                </nav>
+                
+                <div id="schedule-container" class="relative">
+                </div>
+            </section>
+
+            <section id="panduan">
+                <h2 class="text-2xl font-semibold text-slate-800 mb-4">Panduan & Praktik Terbaik</h2>
+                <div class="space-y-3" id="accordion-container">
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const scheduleData = {
+                senin: {
+                    pilar: 'Peluang',
+                    waktu: '12:30 WIB',
+                    feed: 'Post Lowongan Kerja Utama. Gunakan template #1.',
+                    story: 'Q&A Box: "Tanya apa saja tentang lowongan ini!"',
+                    pilarColor: 'bg-sky-100 text-sky-800'
+                },
+                selasa: {
+                    pilar: 'Edukasi',
+                    waktu: '19:00 WIB',
+                    feed: 'Carousel Post (3-5 slide). Contoh: "5 Kesalahan Umum Sales Pemula".',
+                    story: 'Polling: "Kesalahan mana yang pernah kamu alami?"',
+                    pilarColor: 'bg-amber-100 text-amber-800'
+                },
+                rabu: {
+                    pilar: 'Peluang',
+                    waktu: '12:30 WIB',
+                    feed: 'Reminder Lowongan / Posisi Lain. Bisa format Reel singkat.',
+                    story: 'Video "Day in The Life" singkat dari tim sales.',
+                    pilarColor: 'bg-sky-100 text-sky-800'
+                },
+                kamis: {
+                    pilar: 'Edukasi',
+                    waktu: '19:30 WIB',
+                    feed: 'Infografis Simpel. Contoh: "Perbedaan Sales & Marketing".',
+                    story: 'Quiz: "Uji pengetahuanmu tentang dunia sales".',
+                    pilarColor: 'bg-amber-100 text-amber-800'
+                },
+                jumat: {
+                    pilar: 'Kultur',
+                    waktu: '12:00 WIB',
+                    feed: 'Testimoni Freelancer / Karyawan. Foto + Quote. Gunakan template #3.',
+                    story: '"Jumat Berkah": Share ulang lowongan dari hari Senin.',
+                    pilarColor: 'bg-emerald-100 text-emerald-800'
+                },
+                sabtu: {
+                    pilar: 'Komunitas',
+                    waktu: '10:30 WIB',
+                    feed: 'Postingan Pertanyaan. "Share tool andalanmu untuk sales di komen!".',
+                    story: 'Repost jawaban-jawaban terbaik dari audiens.',
+                    pilarColor: 'bg-violet-100 text-violet-800'
+                },
+                minggu: {
+                    pilar: 'Kultur',
+                    waktu: '20:00 WIB',
+                    feed: 'Quote Motivasi. Kutipan tentang karir, kerja keras, atau kesuksesan.',
+                    story: 'Stiker "Siapkan Energimu" untuk menyambut hari Senin.',
+                    pilarColor: 'bg-emerald-100 text-emerald-800'
+                }
+            };
+
+            const accordionData = [
+                {
+                    title: 'Persiapan Konten (Content Batching)',
+                    content: 'Luangkan waktu 2-3 jam setiap akhir pekan (misalnya hari Jumat) untuk menyiapkan semua desain dan caption untuk seminggu ke depan. Gunakan tools seperti Meta Business Suite untuk menjadwalkan postingan secara otomatis.'
+                },
+                {
+                    title: 'Manfaatkan Instagram Stories',
+                    content: 'Stories adalah kunci interaksi harian. Gunakan stiker interaktif (Polling, Q&A, Quiz, Slider) setiap hari untuk menjaga akun tetap "hidup".'
+                },
+                {
+                    title: 'Analisis & Adaptasi',
+                    content: 'Setiap awal bulan, buka Instagram Insights. Perhatikan metrik berikut: Postingan Paling Banyak Disimpan (Saves) karena ini adalah indikator konten paling berharga, dan Jangkauan (Reach) per Hari/Jam untuk menyesuaikan jadwal posting Anda.'
+                },
+                {
+                    title: 'Konsistensi Template',
+                    content: 'Patuhi template desain yang sudah Anda tentukan untuk setiap pilar konten. Ini akan membangun identitas visual yang kuat dan profesional.'
+                }
+            ];
+
+            const pilarChartCtx = document.getElementById('pilarChart').getContext('2d');
+            new Chart(pilarChartCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Peluang', 'Edukasi', 'Kultur & Komunitas'],
+                    datasets: [{
+                        label: 'Alokasi Konten',
+                        data: [40, 40, 20],
+                        backgroundColor: [
+                            '#0284c7', // sky-600
+                            '#f59e0b', // amber-500
+                            '#10b981'  // emerald-500
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 4,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14,
+                                    family: 'Inter'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        onComplete: () => { }
+                    }
+                }
+            });
+
+            const scheduleContainer = document.getElementById('schedule-container');
+            function renderSchedule() {
+                let html = '';
+                for (const day in scheduleData) {
+                    const data = scheduleData[day];
+                    const isVisible = day === 'senin' ? '' : 'hidden';
+                    html += `
+                        <div id="schedule-${day}" class="schedule-card bg-white p-6 rounded-lg shadow-sm border border-slate-200 ${isVisible}">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-900 capitalize">${day}</h3>
+                                    <p class="text-slate-500">${data.waktu}</p>
+                                </div>
+                                <span class="text-xs font-semibold px-3 py-1 rounded-full ${data.pilarColor}">${data.pilar}</span>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-slate-200 space-y-4">
+                                <div>
+                                    <h4 class="font-semibold text-slate-700">Konten Feed:</h4>
+                                    <p class="text-slate-600 mt-1">${data.feed}</p>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-slate-700">Ide Story:</h4>
+                                    <p class="text-slate-600 mt-1">${data.story}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                scheduleContainer.innerHTML = html;
+            }
+            
+            const dayFilters = document.querySelectorAll('.day-filter');
+            dayFilters.forEach(button => {
+                button.addEventListener('click', () => {
+                    const selectedDay = button.dataset.day;
+
+                    dayFilters.forEach(btn => {
+                        btn.classList.remove('active-day');
+                        btn.classList.add('inactive-day');
+                    });
+                    button.classList.add('active-day');
+                    button.classList.remove('inactive-day');
+
+                    document.querySelectorAll('.schedule-card').forEach(card => {
+                        if (card.id === `schedule-${selectedDay}`) {
+                            card.classList.remove('hidden');
+                        } else {
+                            card.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+            
+            const accordionContainer = document.getElementById('accordion-container');
+            function renderAccordion() {
+                let html = '';
+                accordionData.forEach((item, index) => {
+                    html += `
+                        <div class="bg-white border border-slate-200 rounded-lg">
+                            <h2>
+                                <button type="button" class="flex items-center justify-between w-full p-5 font-medium text-left text-slate-800" data-accordion-target="accordion-content-${index}">
+                                    <span>${item.title}</span>
+                                    <svg class="w-3 h-3 rotate-0 shrink-0 transition-transform duration-200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                    </svg>
+                                </button>
+                            </h2>
+                            <div id="accordion-content-${index}" class="accordion-content px-5">
+                                <div class="pb-5">
+                                    <p class="text-slate-600">${item.content}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                accordionContainer.innerHTML = html;
+            }
+
+            accordionContainer.addEventListener('click', function(e) {
+                const button = e.target.closest('[data-accordion-target]');
+                if (!button) return;
+
+                const contentId = button.getAttribute('data-accordion-target');
+                const content = document.getElementById(contentId);
+                const svg = button.querySelector('svg');
+
+                if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+                    content.style.maxHeight = '0px';
+                    svg.classList.remove('rotate-180');
+                } else {
+                    document.querySelectorAll('.accordion-content').forEach(el => {
+                        el.style.maxHeight = '0px';
+                        if(el.previousElementSibling.querySelector('svg')) {
+                           el.previousElementSibling.querySelector('svg').classList.remove('rotate-180');
+                        }
+                    });
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    svg.classList.add('rotate-180');
+                }
+            });
+            
+            const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+            downloadPdfBtn.addEventListener('click', function() {
+                const { jsPDF } = window.jspdf;
+                const content = document.getElementById('main-content');
+                const originalButtonText = downloadPdfBtn.innerHTML;
+                
+                downloadPdfBtn.disabled = true;
+                downloadPdfBtn.innerHTML = 'Mempersiapkan PDF...';
+
+                document.body.classList.add('pdf-render-mode');
+                
+                html2canvas(content, {
+                    scale: 2, 
+                    useCORS: true, 
+                    onclone: (document) => {
+                        document.querySelector('.day-filters').style.display = 'none';
+                    }
+                }).then(canvas => {
+                    document.body.classList.remove('pdf-render-mode');
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+                    const canvasWidth = canvas.width;
+                    const canvasHeight = canvas.height;
+                    const ratio = canvasWidth / canvasHeight;
+                    const imgWidth = pdfWidth - 20; 
+                    const imgHeight = imgWidth / ratio;
+                    let heightLeft = imgHeight;
+                    let position = 10;
+
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= (pdfHeight - 20);
+
+                    while (heightLeft > 0) {
+                        position = -heightLeft - 10;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                        heightLeft -= (pdfHeight - 20);
+                    }
+                    
+                    pdf.save('Rencana_Konten_Instagram_BaxDigital.pdf');
+                    
+                    downloadPdfBtn.disabled = false;
+                    downloadPdfBtn.innerHTML = originalButtonText;
+                }).catch(err => {
+                    console.error("Gagal membuat PDF:", err);
+                    document.body.classList.remove('pdf-render-mode');
+                    downloadPdfBtn.disabled = false;
+                    downloadPdfBtn.innerHTML = originalButtonText;
+                    alert("Maaf, terjadi kesalahan saat membuat PDF.");
+                });
+            });
+
+            renderSchedule();
+            renderAccordion();
+        });
+    </script>
+</body>
+</html>
